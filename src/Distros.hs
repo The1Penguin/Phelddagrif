@@ -258,7 +258,24 @@ runQuiz = execStateT (execTree question_tree) all_distros >>= \case
                 xs -> pickOne xs
           >>= printf "You should choose %s" . T.show
   where
+    yes_no :: String -> Maybe Bool
+    yes_no = \case
+               "Y" -> pure True
+               "y" -> pure True
+               "Yes" -> pure True
+               "yes" -> pure True
+               "N" -> pure False
+               "n" -> pure False
+               "No" -> pure False
+               "no" -> pure False
+               _ -> Nothing
+
+    answer :: IO Bool
+    answer = getLine <&> yes_no >>= \case
+               Just x -> pure x
+               Nothing -> answer
+
     execTree :: Tree Question -> StateT [Distro] IO ()
     execTree = \case
       Leaf -> pure ()
-      Node q l r -> pure ()
+      Node (s,f) l r -> lift (putStr $ T.unpack (s <> " [y/n] ")) >> lift answer >>= \b -> modify (f b) >> execTree (if b then r else l)
