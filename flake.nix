@@ -68,8 +68,11 @@
       # this stuff is *not* per-system
       overlays = {
         default = makeHaskellOverlay (prev: hfinal: hprev:
+          let hlib = prev.haskell.lib; in
           {
             phelddagrif = hprev.callCabal2nix "phelddagrif" ./. { };
+
+            rando = hlib.dontCheck hprev.rando;
           });
       };
     };

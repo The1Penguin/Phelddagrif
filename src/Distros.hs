@@ -1,7 +1,13 @@
 {-# LANGUAGE OverloadedStrings, LambdaCase #-}
 module Distros where
 
+import Data.Functor
 import Data.Text (Text)
+import qualified Data.Text as T
+import Control.Monad.State
+import Text.Printf
+import Rando (pickOne)
+import Foreign.C.Error (eHOSTDOWN)
 
 data Tree a where
   Node :: a -> Tree a -> Tree a -> Tree a
@@ -33,6 +39,35 @@ data Distro where
   Tails :: Distro
   deriving Eq
 
+instance Show Distro where
+  show = \case
+            Ubuntu -> "Ubuntu"
+            Mint -> "Linux Mint"
+            PopOS -> "Pop!_OS"
+            Arch -> "Arch Linux"
+            NixOS -> "NixOS"
+            Fedora WorkStation -> "Fedora Workstation"
+            Fedora KDE_Plasma -> "Fedora KDE Plasma"
+            Fedora Silverblue -> "Fedora Silverblue"
+            Fedora Kinoite -> "Fedora kinoite"
+            CachyOS -> "CachyOS"
+            Debian -> "Debian"
+            OpenSuse Tumbleweed -> "OpenSUSE Tumbleweed"
+            OpenSuse Leap -> "OpenSUSE Leap"
+            Elementary -> "elementary OS"
+            Artix -> "Artix Linux"
+            PuppyLinux -> "Puppy Linux"
+            Alpine -> "Alpine Linux"
+            Gentoo -> "Gentoo"
+            Hannah_Montana -> "Hannah Montana Linux"
+            LFS -> "Linux from scratch"
+            QubeOS -> "QubeOS"
+            Nyarch -> "Nyarch"
+            YiffOS -> "YiffOS"
+            Void -> "Void Linux"
+            Zorin -> "Zorin OS"
+            Tails -> "Tails"
+
 data FedoraSpins where
   WorkStation :: FedoraSpins
   KDE_Plasma :: FedoraSpins
@@ -45,34 +80,34 @@ data SuseSpins where
   Leap :: SuseSpins
   deriving Eq
 
-all, beginner, immutable, de, bleeding_edge, stable, windows_like, minimal, memes, security :: [Distro]
-all = [ Ubuntu
-      , Mint
-      , PopOS
-      , Arch
-      , NixOS
-      , Fedora WorkStation
-      , Fedora KDE_Plasma
-      , Fedora Silverblue
-      , Fedora Kinoite
-      , CachyOS
-      , Debian
-      , OpenSuse Tumbleweed
-      , OpenSuse Leap
-      , Elementary
-      , Artix
-      , PuppyLinux
-      , Alpine
-      , Gentoo
-      , Hannah_Montana
-      , LFS
-      , QubeOS
-      , Nyarch
-      , YiffOS
-      , Void
-      , Zorin
-      , Tails
-      ]
+all_distros, beginner, immutable, de, bleeding_edge, stable, windows_like, minimal, memes, security :: [Distro]
+all_distros = [ Ubuntu
+              , Mint
+              , PopOS
+              , Arch
+              , NixOS
+              , Fedora WorkStation
+              , Fedora KDE_Plasma
+              , Fedora Silverblue
+              , Fedora Kinoite
+              , CachyOS
+              , Debian
+              , OpenSuse Tumbleweed
+              , OpenSuse Leap
+              , Elementary
+              , Artix
+              , PuppyLinux
+              , Alpine
+              , Gentoo
+              , Hannah_Montana
+              , LFS
+              , QubeOS
+              , Nyarch
+              , YiffOS
+              , Void
+              , Zorin
+              , Tails
+              ]
 
 beginner = [ Ubuntu
            , Mint
@@ -216,3 +251,14 @@ question_tree = Node beginner_question display_tree display_tree
     bleeding_edge_tree = Node bleeding_edge_question security_tree security_tree
     security_tree = Node security_question memes_tree Leaf
     memes_tree = Node memes_question Leaf Leaf
+
+runQuiz :: IO ()
+runQuiz = execStateT (execTree question_tree) all_distros >>= \case
+                [] -> pure NixOS
+                xs -> pickOne xs
+          >>= printf "You should choose %s" . T.show
+  where
+    execTree :: Tree Question -> StateT [Distro] IO ()
+    execTree = \case
+      Leaf -> pure ()
+      Node q l r -> pure ()
