@@ -1,4 +1,11 @@
+{-# LANGUAGE OverloadedStrings, LambdaCase #-}
 module Distros where
+
+import Data.Text (Text)
+
+data Tree a where
+  Node :: a -> Tree a -> Tree a -> Tree a
+  Leaf :: Tree a
 
 data Distro where
   Ubuntu :: Distro
@@ -24,16 +31,19 @@ data Distro where
   Void :: Distro
   Zorin :: Distro
   Tails :: Distro
+  deriving Eq
 
 data FedoraSpins where
   WorkStation :: FedoraSpins
   KDE_Plasma :: FedoraSpins
   Silverblue :: FedoraSpins
   Kinoite :: FedoraSpins
+  deriving Eq
 
 data SuseSpins where
   Tumbleweed :: SuseSpins
   Leap :: SuseSpins
+  deriving Eq
 
 all, beginner, immutable, de, bleeding_edge, stable, windows_like, minimal, memes, security :: [Distro]
 all = [ Ubuntu
@@ -74,7 +84,8 @@ beginner = [ Ubuntu
            ]
 immutable = [ NixOS
             , Fedora Silverblue
-            , Fedora Kinoite]
+            , Fedora Kinoite
+            ]
 de = [ Ubuntu
      , Mint
      , PopOS
@@ -91,7 +102,9 @@ de = [ Ubuntu
      , Nyarch
      , Zorin
      , Tails
-     , PuppyLinux]
+     , PuppyLinux
+     ]
+
 windows_like = [ Mint
                , Fedora KDE_Plasma
                , Fedora Kinoite
@@ -100,7 +113,9 @@ windows_like = [ Mint
                , OpenSuse Leap
                , Hannah_Montana
                , Zorin
-               , PuppyLinux]
+               , PuppyLinux
+               ]
+
 minimal = [ NixOS
           , Arch
           , Artix
@@ -109,7 +124,9 @@ minimal = [ NixOS
           , QubeOS
           , LFS
           , Void
-          , YiffOS]
+          , YiffOS
+          ]
+
 memes = [ Arch
         , NixOS
         , Artix
@@ -120,10 +137,14 @@ memes = [ Arch
         , QubeOS
         , Nyarch
         , Uwuntu
-        , YiffOS]
+        , YiffOS
+        ]
+
 security = [ QubeOS
            , Tails
-           , LFS]
+           , LFS
+           ]
+
 bleeding_edge = [ OpenSuse Tumbleweed
                 , Arch
                 , NixOS
@@ -133,7 +154,9 @@ bleeding_edge = [ OpenSuse Tumbleweed
                 , LFS
                 , QubeOS
                 , Nyarch
-                , Void]
+                , Void
+                ]
+
 stable = [ OpenSuse Leap
          , Ubuntu
          , Mint
@@ -145,4 +168,51 @@ stable = [ OpenSuse Leap
          , Fedora Kinoite
          , Debian
          , Hannah_Montana
-         , Tails]
+         , Tails
+         ]
+
+simp :: Eq a => Bool -> [a] -> a -> Bool
+simp = \case
+  True -> flip elem
+  False -> (not .) . flip elem
+
+type Question = (Text, Bool -> [Distro] -> [Distro])
+
+memes_question :: Question
+memes_question = ("Do you want a memeable distro?", filter . (`simp` memes))
+
+beginner_question :: Question
+beginner_question = ("Would you classify yourself as a beginner?", filter . (`simp` beginner))
+
+immutable_question :: Question
+immutable_question = ("Do you want a immutable filesystem?", filter . (`simp` immutable))
+
+display_question :: Question
+display_question = ("Do you want a display manager installed by default?", filter . (`simp` de))
+
+windows_question :: Question
+windows_question = ("Do you want a said display manager to look like Windows?", filter . (`simp` windows_like))
+
+minimal_question :: Question
+minimal_question = ("Do you want a minimal system?", filter . (`simp` minimal))
+
+security_question :: Question
+security_question = ("Is a security focused distro of importance?", filter . (`simp` security))
+
+bleeding_edge_question :: Question
+bleeding_edge_question = ("Do you want your packages to be bleeding edge?", filter . (`simp` bleeding_edge))
+
+stable_question :: Question
+stable_question = ("Do you want your packages to be stable?", filter . (`simp` stable))
+
+question_tree :: Tree Question
+question_tree = Node beginner_question display_tree display_tree
+  where
+    display_tree = Node display_question minimal_tree windows_tree
+    minimal_tree = Node minimal_question immutable_tree immutable_tree
+    windows_tree = Node windows_question immutable_tree immutable_tree
+    immutable_tree = Node immutable_question stable_tree stable_tree
+    stable_tree = Node stable_question bleeding_edge_tree security_tree
+    bleeding_edge_tree = Node bleeding_edge_question security_tree security_tree
+    security_tree = Node security_question memes_tree Leaf
+    memes_tree = Node memes_question Leaf Leaf
