@@ -117,10 +117,12 @@ beginner = [ Ubuntu
            , Fedora KDE_Plasma
            , CachyOS
            ]
+
 immutable = [ NixOS
             , Fedora Silverblue
             , Fedora Kinoite
             ]
+
 de = [ Ubuntu
      , Mint
      , PopOS
@@ -138,6 +140,7 @@ de = [ Ubuntu
      , Zorin
      , Tails
      , PuppyLinux
+     , NixOS
      ]
 
 windows_like = [ Mint
@@ -149,6 +152,7 @@ windows_like = [ Mint
                , Hannah_Montana
                , Zorin
                , PuppyLinux
+               , NixOS
                ]
 
 minimal = [ NixOS
@@ -278,4 +282,4 @@ runQuiz = execStateT (execTree question_tree) all_distros >>= \case
     execTree :: Tree Question -> StateT [Distro] IO ()
     execTree = \case
       Leaf -> pure ()
-      Node (s,f) l r -> lift (putStr $ T.unpack (s <> " [y/n] ")) >> lift answer >>= \b -> modify (f b) >> execTree (if b then r else l)
+      Node (s,f) l r -> lift (putStrLn $ T.unpack (s <> " [y/n] ")) >> lift answer >>= \b -> modify (f b) >> execTree (if b then r else l)
